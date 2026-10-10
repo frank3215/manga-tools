@@ -1,0 +1,36 @@
+# ---- 大文件 / 模型 / 运行时，绝不入库 ----
+# 模型与预编译二进制（数 GB，GitHub 单文件上限 100MB）
+*.gguf
+*.dmg
+*.tar.gz
+*.zip
+llama-*/
+koharu_*
+
+# 上游仓库（独立 clone，见 README 的克隆说明）
+manga-image-translator/
+
+# ---- 生成的翻译结果与运行产物 ----
+out/
+out-*/
+qa/
+qa[0-9]/
+test1/
+logs/
+*.log
+
+# ---- Python 环境 ----
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# ---- 编辑器 / 系统 ----
+.DS_Store
+.idea/
+.vscode/
+
+# ---- 可能含密钥的本地覆盖 ----
+.env
+*.local
+*.local.*

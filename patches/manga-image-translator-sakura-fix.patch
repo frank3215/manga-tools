@@ -1,0 +1,24 @@
+diff --git a/manga_translator/translators/sakura.py b/manga_translator/translators/sakura.py
+index b2085b8..547613b 100644
+--- a/manga_translator/translators/sakura.py
++++ b/manga_translator/translators/sakura.py
+@@ -462,6 +462,8 @@ class SakuraTranslator(CommonTranslator):
+ 
+         # 发送翻译请求
+         response = await self._handle_translation_request(queries)
++        if not isinstance(response, str):
++            response = str(response)
+         self.logger.debug('-- Sakura Response --\n' + response + '\n\n')
+ 
+         # 检查翻译结果是否存在重复或行数不匹配的问题
+@@ -496,7 +498,9 @@ class SakuraTranslator(CommonTranslator):
+                 server_error_attempt += 1
+                 if server_error_attempt >= self._RETRY_ATTEMPTS:
+                     self.logger.error(f'Sakura API请求失败。错误信息： {e}')
+-                    return prompt
++                    # 原实现 return prompt（可能是 list）会让上层字符串拼接抛 TypeError，
++                    # 并且会静默产出「没翻译」的图片；改为抛异常，让这张图明确失败、由外层重试。
++                    raise RuntimeError(f'Sakura API 请求失败，服务不可用：{e}') from e
+                 self.logger.warning(f'Sakura因服务器错误而进行重试。尝试次数： {server_error_attempt}，错误信息： {e}')
+ 
+         return response
