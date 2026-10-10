@@ -37,6 +37,7 @@ manga-tools/
 ├── scripts/                    # 全部可执行脚本，见下表
 ├── patches/
 │   └── manga-image-translator-sakura-fix.patch   # 对上游 sakura 翻译器的两处修复
+├── .githooks/pre-commit        # 第二道防线：拦截图片/模型/大文件入库
 ├── requirements-norust.txt     # 上游 requirements 去掉 Rust 轮子依赖后的版本
 └── (manga-image-translator/)   # 上游仓库，需自行 clone，已被 .gitignore 排除
 ```
@@ -54,9 +55,10 @@ manga-tools/
 ## 快速开始
 
 ```bash
-# 0) 取上游代码（本仓库不含它）
+# 0) 取上游代码（本仓库不含它），并启用防误提交钩子
 git clone https://github.com/zyddnys/manga-image-translator.git \
   ~/manga-tools/manga-image-translator
+git config core.hooksPath .githooks
 
 # 1) 建虚拟环境、装依赖
 bash scripts/setup.sh
@@ -161,9 +163,33 @@ http://127.0.0.1:8080/health` 返回 `{"status":"ok"}`，并检查 `logs/<作品
 
 ## 不入库的内容
 
-为避免仓库膨胀与版权/内容合规问题，以下内容被 [`.gitignore`](.gitignore) 排除：
+本仓库只放**脚本、配置与文档**。为避免仓库膨胀与版权/内容合规问题，
+[`.gitignore`](.gitignore) 采用**扩展名兜底**策略：不管文件出现在哪个目录，只要命中下列
+类型就不会被提交。
 
-- `sakura-7b-lnovel-v0.9-Q4_K_M.gguf`（4.6 GB，超出 GitHub 单文件 100 MB 上限）
-- `koharu_*.dmg`、`llama-*.tar.gz`、`llama-*/`（预编译二进制）
-- `manga-image-translator/`（上游仓库，自行 clone）
-- `out/`、`out-*/`、`qa*/`、`test1/`、`logs/`、`*.log`（翻译产物与运行日志，含漫画原图与译文）
+| 类别 | 覆盖格式（示例） |
+| --- | --- |
+| 图片 | `jpg/jpeg/png/gif/webp/avif/heic/bmp/tif/tiff/svg/psd/tga/dds/exr/jxl` + 各类相机 RAW（`cr2/cr3/nef/arw/dng` …） |
+| 磁盘镜像 / 安装包 | `dmg/pkg/iso/img/sparseimage/vhd/vhdx/qcow2/msi/deb/rpm` |
+| 模型权重 | `gguf/ggml/safetensors/ckpt/pt/pth/onnx/tflite/mlmodel/h5/pb/npz/npy/bin/msgpack`，以及 `models/`、`hub/`、`models--*/` 等缓存目录 |
+| 压缩包 / 大二进制 | `tar/tar.gz/tgz/zip/7z/rar/xz/zst/parquet/sqlite/so/dylib/dll/exe/wasm` … |
+| 本机实际大目录 | `sakura-7b-lnovel-v0.9-Q4_K_M.gguf`（4.6 GB，超 GitHub 单文件 100 MB 上限）、`koharu_*.dmg`、`llama-*/`、`manga-image-translator/`（上游 clone） |
+| 翻译产物与日志 | `out/`、`out-*/`、`qa*/`、`test1/`、`input*/`、`result*/`、`logs/`、`*.log`（含漫画原图与译文） |
+
+若将来确实需要在 README 里放一张示意图，在 `.gitignore` 末尾用 `!` 单独放行，例如
+`!docs/assets/*.png`。
+
+### 第二道防线：pre-commit 钩子
+
+`.gitignore` 只对**未跟踪**文件生效，`git add -f` 或规则疏漏仍可能把大文件提交进去，
+因此仓库内置了 [`.githooks/pre-commit`](.githooks/pre-commit)，直接检查暂存区：
+命中上述扩展名、或单文件超过 1 MB，立即中止提交。
+
+启用（每个 clone 各做一次，钩子不会随 clone 自动生效）：
+
+```bash
+git config core.hooksPath .githooks
+```
+
+确需提交时用 `git commit --no-verify` 跳过。
+

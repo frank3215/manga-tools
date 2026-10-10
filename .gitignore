@@ -1,16 +1,160 @@
-# ---- 大文件 / 模型 / 运行时，绝不入库 ----
-# 模型与预编译二进制（数 GB，GitHub 单文件上限 100MB）
-*.gguf
+# =====================================================================
+# 本仓库只存脚本、配置与文档。
+# 图片、磁盘镜像、模型权重、数据集、预编译二进制、翻译产物一律不入库。
+# 下面按「扩展名」做兜底拦截：即使文件出现在未列出的新目录里，也不会被提交。
+# =====================================================================
+
+# ---- 图片：任何格式都不上传（漫画原图 / 译文成品 / 截图） ----
+*.jpg
+*.jpeg
+*.jpe
+*.png
+*.apng
+*.gif
+*.webp
+*.avif
+*.heic
+*.heif
+*.bmp
+*.tif
+*.tiff
+*.ico
+*.jfif
+*.pjpeg
+*.pjp
+*.svg
+*.psd
+*.psb
+*.xcf
+*.tga
+*.dds
+*.exr
+*.jp2
+*.j2k
+*.jxl
+*.qoi
+*.ppm
+*.pgm
+*.pbm
+*.pnm
+*.raw
+*.arw
+*.cr2
+*.cr3
+*.nef
+*.dng
+*.orf
+*.rw2
+*.raf
+*.srw
+*.pef
+*.3fr
+# 若将来确实需要在 README 里放示意图，用 ! 例外单独放行，例如：
+# !docs/assets/*.png
+
+# ---- 磁盘镜像 / 安装包 ----
 *.dmg
+*.pkg
+*.iso
+*.img
+*.sparseimage
+*.vhd
+*.vhdx
+*.qcow2
+*.msi
+*.deb
+*.rpm
+*.app
+
+# ---- 模型权重 / 推理产物（含 GGUF / safetensors / ONNX 等） ----
+*.gguf
+*.ggml
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+*.ort
+*.tflite
+*.mlmodel
+*.mlpackage
+*.h5
+*.hdf5
+*.keras
+*.pb
+*.tflite
+*.npz
+*.npy
+*.bin
+*.msgpack
+*.model
+*.weights
+*.caffemodel
+*.prototxt
+*.engine
+*.plan
+*.trt
+*.ptl
+*.flax
+*.ot
+*.mindir
+*.air
+# 模型缓存目录（transformers / huggingface）
+.cache/
+hub/
+models--*/
+models/
+/models/
+sentencepiece*
+
+# ---- 压缩包 / 大二进制 ----
+*.tar
 *.tar.gz
+*.tgz
+*.tar.bz2
+*.tar.xz
 *.zip
+*.7z
+*.rar
+*.xz
+*.bz2
+*.gz
+*.zst
+*.parquet
+*.arrow
+*.sqlite
+*.sqlite3
+*.db
+*.mdb
+*.pdb
+*.pak
+*.so
+*.dylib
+*.dll
+*.a
+*.o
+*.exe
+*.wasm
+
+# ---- 本机实际存在的大目录（按名字拦截，双保险） ----
 llama-*/
 koharu_*
+node_modules/
 
-# 上游仓库（独立 clone，见 README 的克隆说明）
+# ---- 上游仓库（独立 clone，见 README） ----
 manga-image-translator/
 
-# ---- 生成的翻译结果与运行产物 ----
+# ---- 数据集 / 输入输出目录 ----
+input/
+input-translated/
+input-*/
+output/
+output-*/
+result/
+result-*/
 out/
 out-*/
 qa/
@@ -22,15 +166,27 @@ logs/
 # ---- Python 环境 ----
 .venv/
 venv/
+env/
 __pycache__/
 *.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# ---- 编辑器 / 系统 ----
+# ---- 编辑器 / 系统 / 工具 ----
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
 .idea/
 .vscode/
 
 # ---- 可能含密钥的本地覆盖 ----
 .env
+.env.*
 *.local
 *.local.*

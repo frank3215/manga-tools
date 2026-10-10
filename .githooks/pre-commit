@@ -1,0 +1,46 @@
+#!/bin/bash
+# 提交前拦截：禁止把图片 / 磁盘镜像 / 模型权重 / 压缩包 / 大文件提交进仓库。
+#
+# 启用（每个 clone 各做一次）：
+#   git config core.hooksPath .githooks
+#
+# 这是 .gitignore 之外的第二道防线：.gitignore 只对「未跟踪」文件生效，
+# 一旦用 git add -f 强加、或规则有疏漏，仍可能把大文件提交进去。此钩子直接
+# 检查暂存区内容，命中即拒绝提交。
+#
+# 确实需要提交时：git commit --no-verify
+set -u
+
+MAXKB="${MAXKB:-1024}"
+
+BLOCK_RE='\.(jpe?g|jpe|png|apng|gif|webp|avif|heic|heif|bmp|tiff?|ico|jfif|svg|psd|psb|xcf|tga|dds|exr|jp2|j2k|jxl|qoi|ppm|pgm|pbm|pnm|raw|arw|cr2|cr3|nef|dng|orf|rw2|raf|srw|pef|3fr|dmg|pkg|iso|img|sparseimage|vhd|vhdx|qcow2|msi|deb|rpm|gguf|ggml|safetensors|ckpt|pt|pth|pkl|pickle|joblib|onnx|ort|tflite|mlmodel|mlpackage|h5|hdf5|keras|pb|npz|npy|bin|msgpack|model|weights|caffemodel|prototxt|engine|plan|trt|flax|ot|mindir|air|tar|tgz|zip|7z|rar|xz|bz2|gz|zst|parquet|arrow|sqlite|sqlite3|db|pak|so|dylib|dll|a|o|exe|wasm)$'
+
+fail=0
+count=0
+
+while IFS= read -r -d '' f; do
+  count=$((count + 1))
+  [ -f "$f" ] || continue
+
+  if printf '%s' "$f" | grep -qiE "$BLOCK_RE"; then
+    echo "✗ 禁止提交图片/镜像/模型/压缩包：$f" >&2
+    fail=1
+    continue
+  fi
+
+  bytes=$(wc -c < "$f" | tr -d ' ')
+  kb=$(( (bytes + 1023) / 1024 ))
+  if [ "$kb" -gt "$MAXKB" ]; then
+    echo "✗ 文件过大（${kb}KB > ${MAXKB}KB）：$f" >&2
+    fail=1
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACM -z)
+
+if [ "$fail" -ne 0 ]; then
+  echo "" >&2
+  echo "提交已中止。请把这些文件加入 .gitignore 或移出仓库；" >&2
+  echo "确需提交时用：git commit --no-verify" >&2
+  exit 1
+fi
+
+exit 0
