@@ -27,6 +27,11 @@ export HEALTH="${HEALTH:-http://127.0.0.1:8080/health}"
 export SAKURA_API_BASE="${SAKURA_API_BASE:-http://127.0.0.1:8080/v1}"
 export SAKURA_VERSION="${SAKURA_VERSION:-0.9}"
 
+# USE_GPU=1 时给 manga_translator 加 --use-gpu（自动选 MPS/CUDA）。
+# 默认 0：检测/擦字在 CPU 上也能跑通，MPS 在长图上有 OOM 风险，故保持保守默认。
+export USE_GPU="${USE_GPU:-0}"
+if [ "$USE_GPU" = "1" ]; then export GPU_FLAG="--use-gpu"; else export GPU_FLAG=""; fi
+
 if [ ! -d "$SRC_ROOT" ]; then
   echo "作品根目录不存在：${SRC_ROOT}（用 SRC_ROOT=... 指定）" >&2
   exit 1
@@ -55,8 +60,10 @@ one() {
   if ! wait_server; then echo "FAIL(server) $name"; return 1; fi
 
   mkdir -p "$dest"
+  # $GPU_FLAG 故意不加引号：为空时不产生参数，为 --use-gpu 时按空格拆成一个参数。
   ( cd "$MIT" && source .venv/bin/activate && \
-    python -m manga_translator local -i "$dir" -o "$dest" --overwrite --config-file "$CFG" ) > "$lf" 2>&1
+    python -m manga_translator $GPU_FLAG local -i "$dir" -o "$dest" \
+      --overwrite --config-file "$CFG" ) > "$lf" 2>&1
   rc=$?
   dst_count=$(count_jpg "$dest")
   if [ $rc -eq 0 ] && [ "$dst_count" -ge "$src_count" ] && \
